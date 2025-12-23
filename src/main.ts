@@ -4,8 +4,15 @@ import {
   loadModel,
   generateFunctionCall,
   isModelLoaded,
+  MODEL_INFO,
   type FunctionCall,
 } from "./functiongemma.ts";
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return bytes + " B";
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+  return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+}
 
 let counterController: CounterController | null = null;
 
@@ -57,8 +64,16 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
     </div>
 
     <div class="model-section">
+      <div class="model-size-info">
+        <span class="size-label">Download Size:</span>
+        <span class="size-value">${MODEL_INFO.totalSizeMB} MB</span>
+      </div>
       <button id="load-model" type="button">Load Model</button>
       <div id="model-status" class="status">Model not loaded</div>
+      <div id="progress-bar" class="progress-bar hidden">
+        <div id="progress-fill" class="progress-fill"></div>
+      </div>
+      <div id="progress-detail" class="progress-detail"></div>
     </div>
 
     <div class="input-section">
@@ -155,6 +170,9 @@ counterController = setupCounter(
 
 const loadModelBtn = document.querySelector<HTMLButtonElement>("#load-model")!;
 const modelStatus = document.querySelector<HTMLDivElement>("#model-status")!;
+const progressBar = document.querySelector<HTMLDivElement>("#progress-bar")!;
+const progressFill = document.querySelector<HTMLDivElement>("#progress-fill")!;
+const progressDetail = document.querySelector<HTMLDivElement>("#progress-detail")!;
 const userInput = document.querySelector<HTMLInputElement>("#user-input")!;
 const sendBtn = document.querySelector<HTMLButtonElement>("#send-btn")!;
 const resultDiv = document.querySelector<HTMLDivElement>("#result")!;
@@ -163,27 +181,38 @@ const exampleCmds = document.querySelectorAll<HTMLSpanElement>(".example-cmd");
 
 loadModelBtn.addEventListener("click", async () => {
   loadModelBtn.disabled = true;
-  modelStatus.textContent = "Loading model...";
+  modelStatus.textContent = "Initializing...";
   modelStatus.className = "status loading";
+  progressBar.classList.remove("hidden");
 
   try {
     await loadModel((progress) => {
       if (progress.status === "loading") {
-        const pct =
-          progress.progress !== undefined
-            ? ` (${Math.round(progress.progress)}%)`
-            : "";
-        modelStatus.textContent = `Loading ${progress.file}${pct}`;
+        const pct = progress.progress !== undefined ? Math.round(progress.progress) : 0;
+        const loaded = progress.loaded ?? 0;
+        const total = progress.total ?? 0;
+
+        modelStatus.textContent = `Loading ${progress.file}...`;
+        progressFill.style.width = `${pct}%`;
+
+        if (loaded > 0 && total > 0) {
+          progressDetail.textContent = `${formatBytes(loaded)} / ${formatBytes(total)} (${pct}%)`;
+        } else {
+          progressDetail.textContent = `${pct}%`;
+        }
       } else if (progress.status === "ready") {
         modelStatus.textContent = "Model ready!";
         modelStatus.className = "status ready";
+        progressFill.style.width = "100%";
+        progressDetail.textContent = "";
       }
     });
 
     userInput.disabled = false;
     sendBtn.disabled = false;
-    loadModelBtn.textContent = "✓ Model Loaded";
+    loadModelBtn.textContent = "Model Loaded";
     loadModelBtn.classList.add("loaded");
+    progressBar.classList.add("hidden");
 
     // Enable quick commands and example commands
     quickCmds.forEach((btn) => (btn.disabled = false));
@@ -191,6 +220,8 @@ loadModelBtn.addEventListener("click", async () => {
   } catch (error) {
     modelStatus.textContent = `Error: ${error}`;
     modelStatus.className = "status error";
+    progressBar.classList.add("hidden");
+    progressDetail.textContent = "";
     loadModelBtn.disabled = false;
   }
 });

@@ -8,6 +8,20 @@ import {
 
 const MODEL_ID = "onnx-community/functiongemma-270m-it-ONNX";
 
+// Model size information (approximate, based on fp16)
+export const MODEL_INFO = {
+  name: "FunctionGemma-270M",
+  modelId: MODEL_ID,
+  tokenizerSize: 2.5 * 1024 * 1024, // ~2.5 MB
+  modelSize: 540 * 1024 * 1024, // ~540 MB (fp16)
+  get totalSize() {
+    return this.tokenizerSize + this.modelSize;
+  },
+  get totalSizeMB() {
+    return Math.round(this.totalSize / (1024 * 1024));
+  },
+};
+
 let tokenizer: PreTrainedTokenizer | null = null;
 let model: PreTrainedModel | null = null;
 
@@ -90,6 +104,8 @@ export interface LoadingProgress {
   status: string;
   progress?: number;
   file?: string;
+  loaded?: number;
+  total?: number;
 }
 
 export async function loadModel(
@@ -99,31 +115,55 @@ export async function loadModel(
     return;
   }
 
-  onProgress?.({ status: "loading", file: "tokenizer" });
+  onProgress?.({
+    status: "loading",
+    file: "tokenizer",
+    loaded: 0,
+    total: MODEL_INFO.tokenizerSize,
+  });
+
   tokenizer = await AutoTokenizer.from_pretrained(MODEL_ID, {
     progress_callback: (p) => {
       if (p && typeof p === "object" && "progress" in p) {
         const progress = p.progress as number | undefined;
+        const loaded = (p as { loaded?: number }).loaded;
+        const total = (p as { total?: number }).total;
         if (progress !== undefined) {
           onProgress?.({
             status: "loading",
             file: "tokenizer",
             progress,
+            loaded: loaded ?? Math.round((progress / 100) * MODEL_INFO.tokenizerSize),
+            total: total ?? MODEL_INFO.tokenizerSize,
           });
         }
       }
     },
   });
 
-  onProgress?.({ status: "loading", file: "model" });
+  onProgress?.({
+    status: "loading",
+    file: "model",
+    loaded: 0,
+    total: MODEL_INFO.modelSize,
+  });
+
   model = await AutoModelForCausalLM.from_pretrained(MODEL_ID, {
     dtype: "fp16",
     device: "webgpu",
     progress_callback: (p) => {
       if (p && typeof p === "object" && "progress" in p) {
         const progress = p.progress as number | undefined;
+        const loaded = (p as { loaded?: number }).loaded;
+        const total = (p as { total?: number }).total;
         if (progress !== undefined) {
-          onProgress?.({ status: "loading", file: "model", progress });
+          onProgress?.({
+            status: "loading",
+            file: "model",
+            progress,
+            loaded: loaded ?? Math.round((progress / 100) * MODEL_INFO.modelSize),
+            total: total ?? MODEL_INFO.modelSize,
+          });
         }
       }
     },
