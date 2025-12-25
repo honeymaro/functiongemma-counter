@@ -173,9 +173,9 @@ export async function loadModel(
 }
 
 // ============================================
-// Preprocessing: Korean to English translation
+// Preprocessing: Multilingual to English translation
 // ============================================
-const KOREAN_TO_ENGLISH: { pattern: RegExp; replacement: string }[] = [
+const MULTILINGUAL_TO_ENGLISH: { pattern: RegExp; replacement: string }[] = [
   // Special number patterns (must be first)
   { pattern: /\+1/g, replacement: "increment" },
   { pattern: /-1/g, replacement: "decrement" },
@@ -224,6 +224,196 @@ const KOREAN_TO_ENGLISH: { pattern: RegExp; replacement: string }[] = [
   { pattern: /subtract from counter/gi, replacement: "decrement" },
   { pattern: /counter up/gi, replacement: "increment" },
   { pattern: /counter down/gi, replacement: "decrement" },
+
+  // ============================================
+  // Japanese keywords (日本語)
+  // ============================================
+
+  // Japanese compound phrases (must be before single words)
+  { pattern: /一つ増やし?て?/g, replacement: "increment" },
+  { pattern: /ひとつ増やし?て?/g, replacement: "increment" },
+  { pattern: /1増やし?て?/g, replacement: "increment" },
+  { pattern: /一つ減らし?て?/g, replacement: "decrement" },
+  { pattern: /ひとつ減らし?て?/g, replacement: "decrement" },
+  { pattern: /1減らし?て?/g, replacement: "decrement" },
+  { pattern: /一つ足し?て?/g, replacement: "increment" },
+  { pattern: /ひとつ足し?て?/g, replacement: "increment" },
+  { pattern: /一つ引い?て?/g, replacement: "decrement" },
+  { pattern: /ひとつ引い?て?/g, replacement: "decrement" },
+  { pattern: /1つ減らせ/g, replacement: "decrement" },
+
+  // Japanese "another one" patterns
+  { pattern: /もう一つ/g, replacement: "increment" },
+  { pattern: /もうひとつ/g, replacement: "increment" },
+  { pattern: /もう1つ/g, replacement: "increment" },
+  { pattern: /あと一つ/g, replacement: "increment" },
+  { pattern: /あと1つ/g, replacement: "increment" },
+
+  // Japanese katakana loanwords
+  { pattern: /インクリーズ/g, replacement: "increment" },
+  { pattern: /アドワン/g, replacement: "increment" },
+  { pattern: /アド/g, replacement: "increment" },
+  { pattern: /ディクリーズ/g, replacement: "decrement" },
+  { pattern: /サブトラクト/g, replacement: "decrement" },
+  { pattern: /マイナス1/g, replacement: "decrement" },
+  { pattern: /マイナス一/g, replacement: "decrement" },
+
+  // Japanese compound words (before individual)
+  { pattern: /値引き/g, replacement: "decrement" },
+
+  // Japanese question/request forms (must be before suffix removal)
+  { pattern: /増やしてくれる\?/g, replacement: "increment" },
+  { pattern: /増やしてもらえる\?/g, replacement: "increment" },
+  { pattern: /増やせる\?/g, replacement: "increment" },
+  { pattern: /足してくれる\?/g, replacement: "increment" },
+  { pattern: /足してもらえる\?/g, replacement: "increment" },
+  { pattern: /減らしてくれる\?/g, replacement: "decrement" },
+  { pattern: /減らしてもらえる\?/g, replacement: "decrement" },
+  { pattern: /減らせる\?/g, replacement: "decrement" },
+  { pattern: /引いてくれる\?/g, replacement: "decrement" },
+  { pattern: /下げてくれる\?/g, replacement: "decrement" },
+
+  // Japanese desire/want forms with suffixes (〜したいんだけど, etc.)
+  { pattern: /増やしたいんだけど/g, replacement: "increment" },
+  { pattern: /増やしたいな/g, replacement: "increment" },
+  { pattern: /増やしたい/g, replacement: "increment" },
+  { pattern: /足したいんだけど/g, replacement: "increment" },
+  { pattern: /足したい/g, replacement: "increment" },
+  { pattern: /上げたいんだけど/g, replacement: "increment" },
+  { pattern: /上げたいな/g, replacement: "increment" },
+  { pattern: /上げたい/g, replacement: "increment" },
+  { pattern: /減らしたいんだけど/g, replacement: "decrement" },
+  { pattern: /減らしたい/g, replacement: "decrement" },
+  { pattern: /引きたい/g, replacement: "decrement" },
+  { pattern: /下げたいんだけど/g, replacement: "decrement" },
+  { pattern: /下げたいな/g, replacement: "decrement" },
+  { pattern: /下げたい/g, replacement: "decrement" },
+
+  // Japanese imperative short forms
+  { pattern: /増やせ/g, replacement: "increment" },
+  { pattern: /足せ/g, replacement: "increment" },
+  { pattern: /減らせ/g, replacement: "decrement" },
+  { pattern: /引け/g, replacement: "decrement" },
+  { pattern: /引き/g, replacement: "decrement" },
+  { pattern: /ゼロに戻す/g, replacement: "reset" },
+  { pattern: /ゼロに戻して/g, replacement: "reset" },
+  { pattern: /ゼロに戻し/g, replacement: "reset" },
+  { pattern: /0に戻す/g, replacement: "reset" },
+  { pattern: /0に戻して/g, replacement: "reset" },
+  { pattern: /0に戻し/g, replacement: "reset" },
+  { pattern: /元に戻す/g, replacement: "reset" },
+  { pattern: /元に戻して/g, replacement: "reset" },
+  { pattern: /元に戻し/g, replacement: "reset" },
+  { pattern: /初期値に戻す/g, replacement: "reset" },
+  { pattern: /初期値に戻して/g, replacement: "reset" },
+  { pattern: /初期値に/g, replacement: "reset" },
+  { pattern: /ゼロにする/g, replacement: "reset" },
+  { pattern: /ゼロにして/g, replacement: "reset" },
+  { pattern: /0にリセット/g, replacement: "reset" },
+
+  // Japanese increment keywords (all verb conjugations)
+  { pattern: /増加/g, replacement: "increment" },
+  { pattern: /増やす/g, replacement: "increment" },
+  { pattern: /増やして/g, replacement: "increment" },
+  { pattern: /増やし/g, replacement: "increment" },
+  { pattern: /プラス/g, replacement: "increment" },
+  { pattern: /足す/g, replacement: "increment" },
+  { pattern: /足して/g, replacement: "increment" },
+  { pattern: /足し/g, replacement: "increment" },
+  { pattern: /上げる/g, replacement: "increment" },
+  { pattern: /上げて/g, replacement: "increment" },
+  { pattern: /上げ/g, replacement: "increment" },
+  { pattern: /アップ/g, replacement: "increment" },
+  { pattern: /インクリメント/g, replacement: "increment" },
+  { pattern: /加算/g, replacement: "increment" },
+  { pattern: /加える/g, replacement: "increment" },
+  { pattern: /加えて/g, replacement: "increment" },
+
+  // Japanese decrement keywords (all verb conjugations)
+  { pattern: /減少/g, replacement: "decrement" },
+  { pattern: /減らす/g, replacement: "decrement" },
+  { pattern: /減らして/g, replacement: "decrement" },
+  { pattern: /減らし/g, replacement: "decrement" },
+  { pattern: /マイナス/g, replacement: "decrement" },
+  { pattern: /引く/g, replacement: "decrement" },
+  { pattern: /引いて/g, replacement: "decrement" },
+  { pattern: /引い/g, replacement: "decrement" },
+  { pattern: /下げる/g, replacement: "decrement" },
+  { pattern: /下げて/g, replacement: "decrement" },
+  { pattern: /下げ/g, replacement: "decrement" },
+  { pattern: /ダウン/g, replacement: "decrement" },
+  { pattern: /デクリメント/g, replacement: "decrement" },
+  { pattern: /減算/g, replacement: "decrement" },
+
+  // Japanese set keywords
+  { pattern: /設定/g, replacement: "set" },
+  { pattern: /セット/g, replacement: "set" },
+  { pattern: /変更/g, replacement: "change" },
+  { pattern: /変えて?/g, replacement: "change" },
+  { pattern: /(\d+)に設定/g, replacement: "set to $1" },
+  { pattern: /(\d+)にセット/g, replacement: "set to $1" },
+  { pattern: /(\d+)にして?/g, replacement: "set to $1" },
+  { pattern: /(\d+)に変更/g, replacement: "change to $1" },
+  { pattern: /(\d+)に変えて?/g, replacement: "change to $1" },
+
+  // Japanese reset keywords
+  { pattern: /リセット/g, replacement: "reset" },
+  { pattern: /初期化/g, replacement: "reset" },
+  { pattern: /クリア/g, replacement: "reset" },
+  { pattern: /ゼロ/g, replacement: "zero" },
+  { pattern: /初期値/g, replacement: "reset" },
+  { pattern: /初めから/g, replacement: "reset" },
+  { pattern: /最初から/g, replacement: "reset" },
+  { pattern: /最初に戻/g, replacement: "reset" },
+  { pattern: /やり直/g, replacement: "reset" },
+  { pattern: /取り消/g, replacement: "reset" },
+  { pattern: /なかったことに/g, replacement: "reset" },
+  { pattern: /白紙に戻/g, replacement: "reset" },
+  { pattern: /消して/g, replacement: "reset" },
+  { pattern: /消し/g, replacement: "reset" },
+  { pattern: /全部消/g, replacement: "reset" },
+  { pattern: /0にし/g, replacement: "set to 0" },
+
+  // Japanese set with context (カウンターを{num}に)
+  { pattern: /を(\d+)に$/g, replacement: " set to $1" },
+
+  // Japanese suffixes (remove polite/casual endings)
+  { pattern: /をお願いします$/g, replacement: "" },
+  { pattern: /ようお願いします$/g, replacement: "" },
+  { pattern: /してください$/g, replacement: "" },
+  { pattern: /してくれる\?$/g, replacement: "" },
+  { pattern: /してくれない\?$/g, replacement: "" },
+  { pattern: /してもらえる\?$/g, replacement: "" },
+  { pattern: /できる\?$/g, replacement: "" },
+  { pattern: /してくれ$/g, replacement: "" },
+  { pattern: /してほしい$/g, replacement: "" },
+  { pattern: /してほしいな$/g, replacement: "" },
+  { pattern: /したい$/g, replacement: "" },
+  { pattern: /したいな$/g, replacement: "" },
+  { pattern: /したいんだけど$/g, replacement: "" },
+  { pattern: /しなさい$/g, replacement: "" },
+  { pattern: /するんだ$/g, replacement: "" },
+  { pattern: /せる\?$/g, replacement: "" },
+  { pattern: /して$/g, replacement: "" },
+  { pattern: /ください$/g, replacement: "" },
+  { pattern: /くれ$/g, replacement: "" },
+  { pattern: /しろ$/g, replacement: "" },
+  { pattern: /せよ$/g, replacement: "" },
+  { pattern: /よ$/g, replacement: "" },
+  { pattern: /な$/g, replacement: "" },
+  { pattern: /する$/g, replacement: "" },
+  { pattern: /て$/g, replacement: "" },
+
+  // Japanese context words (add trailing space for proper word separation)
+  { pattern: /カウンター?を?/g, replacement: "counter " },
+  { pattern: /カウンタを?/g, replacement: "counter " },
+  { pattern: /数字を?/g, replacement: "number " },
+  { pattern: /数を?/g, replacement: "value " },
+  { pattern: /値を?/g, replacement: "value " },
+
+  // ============================================
+  // Korean keywords (한국어)
+  // ============================================
 
   // Increment keywords (Korean)
   { pattern: /증가/g, replacement: "increment" },
@@ -287,16 +477,16 @@ const KOREAN_TO_ENGLISH: { pattern: RegExp; replacement: string }[] = [
   { pattern: /해$/g, replacement: "" },
   { pattern: /줘$/g, replacement: "" },
 
-  // Context words
-  { pattern: /카운터를?/g, replacement: "counter" },
-  { pattern: /숫자를?/g, replacement: "number" },
-  { pattern: /값을?/g, replacement: "value" },
+  // Context words (add trailing space for proper word separation)
+  { pattern: /카운터를?/g, replacement: "counter " },
+  { pattern: /숫자를?/g, replacement: "number " },
+  { pattern: /값을?/g, replacement: "value " },
   { pattern: /하나/g, replacement: "one" },
 ];
 
 function preprocessInput(input: string): string {
   let result = input;
-  for (const { pattern, replacement } of KOREAN_TO_ENGLISH) {
+  for (const { pattern, replacement } of MULTILINGUAL_TO_ENGLISH) {
     result = result.replace(pattern, replacement);
   }
   // Clean up multiple spaces
@@ -384,6 +574,7 @@ function parseFunctionCall(
     }
 
     // Post-processing: if set_counter with +1 or -1, convert to increment/decrement
+    // If set_counter with 0, convert to reset_counter
     if (name === "set_counter" && args.number !== undefined) {
       const numStr = String(args.number).trim();
       if (numStr === "+1") {
@@ -391,6 +582,9 @@ function parseFunctionCall(
         delete args.number;
       } else if (numStr === "-1") {
         name = "decrement";
+        delete args.number;
+      } else if (numStr === "0") {
+        name = "reset_counter";
         delete args.number;
       }
     }
